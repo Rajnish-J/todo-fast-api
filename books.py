@@ -8,37 +8,32 @@ from typing import List, Optional
 
 app = FastAPI()
 
-class Book:
+class Book(BaseModel):
     id: int
     title: str
     author: str
     description: Optional[str] = None
     category: str
     rating: int
-    
-    def __init__(self, id, title, author, description, category, rating):
-        self.id = id
-        self.title = title
-        self.author = author
-        self.description = description
-        self.category = category
-        self.rating = rating
+
 
 # * Sample book data
-BOOKS = [
-    Book(1, 'A Brief History of Time', 'Stephen Hawking', 'A Brief History of Time is a popular-science book by Stephen Hawking', 'science', 5),
-    Book(2, 'The Selfish Gene', 'Richard Dawkins', 'The Selfish Gene is a 1976 book on evolution by Richard Dawkins', 'science', 4),
-    Book(3, 'Sapiens: A Brief History of Humankind', 'Yuval Noah Harari', 'Sapiens: A Brief History of Humankind is a book by Yuval Noah Harari', 'history', 4),
-    Book(4, 'A People’s History of the United States', 'Howard Zinn', 'A People’s History of the United States is a book by Howard Zinn', 'history', 3),
-    Book(5, 'The Da Vinci Code', 'Dan Brown', 'The Da Vinci Code is a 2003 mystery thriller novel by Dan Brown', 'thriller', 4),
-    Book(6, 'The Alchemist', 'Paulo Coelho', 'The Alchemist is a novel by Brazilian author Paulo Coelho', 'fiction', 5)
+BOOKS: List[Book] = [
+    Book(id=1, title='A Brief History of Time', author='Stephen Hawking',
+         description='A popular-science book by Stephen Hawking', category='science', rating=5),
+    Book(id=2, title='The Selfish Gene', author='Richard Dawkins',
+         description='A book on evolution by Richard Dawkins', category='science', rating=4),
+    Book(id=3, title='Sapiens: A Brief History of Humankind', author='Yuval Noah Harari',
+         description='A book by Yuval Noah Harari', category='history', rating=4),
+    Book(id=4, title='A People’s History of the United States', author='Howard Zinn',
+         description='A book by Howard Zinn', category='history', rating=3),
+    Book(id=5, title='The Da Vinci Code', author='Dan Brown',
+         description='A mystery thriller novel by Dan Brown', category='thriller', rating=4),
+    Book(id=6, title='The Alchemist', author='Paulo Coelho',
+         description='A novel by Brazilian author Paulo Coelho', category='fiction', rating=5)
 ]
 
-# * Define a Pydantic model for book validation
-class Book(BaseModel):
-    title: str
-    author: str
-    category: str
+
 
 # * GET Methods
 
@@ -102,3 +97,6 @@ async def delete_book(book_title: str):
             BOOKS.pop()
             return {"message": "Book deleted successfully"}
     return {"message": "Book not found"}
+
+# ! ---------------------------- END OF CODE Project 1 API ---------------------------- !
+
