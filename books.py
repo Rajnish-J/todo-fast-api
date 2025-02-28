@@ -1,21 +1,19 @@
-# * Importing necessary libraries
-
-from fastapi import FastAPI, Body, HTTPException
-from pydantic import BaseModel
+# * Import necessary libraries
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field
 from typing import List, Optional
 
 # * Create a FastAPI instance
-
 app = FastAPI()
 
+# * Convert `Book` into a Pydantic model
 class Book(BaseModel):
     id: int
-    title: str
-    author: str
-    description: Optional[str] = None
-    category: str
-    rating: int
-
+    title: str = Field(min_length=2, max_length=80)
+    author: str = Field(min_length=2, max_length=40)
+    description: Optional[str] = Field(None, min_length=2, max_length=200)
+    category: str = Field(min_length=2, max_length=40)
+    rating: int = Field(..., ge=1, le=5)
 
 # * Sample book data
 BOOKS: List[Book] = [
@@ -33,74 +31,79 @@ BOOKS: List[Book] = [
          description='A novel by Brazilian author Paulo Coelho', category='fiction', rating=5)
 ]
 
-
-
 # * GET Methods
-
-@app.get('/books')
+@app.get('/books', response_model=List[Book])
 async def read_all_books():
     return BOOKS
 
-@app.get('/books/{book_title}')
+@app.get('/books/{book_title}', response_model=Book)
 async def read_book(book_title: str):
     for book in BOOKS:
-        if book.get('title').casefold() == book_title.casefold():
+        if book.title.casefold() == book_title.casefold():
             return book
     raise HTTPException(status_code=404, detail="Book not found")
 
-@app.get('/books/')
+@app.get('/books/', response_model=List[Book])
 async def read_category_by_query(category: str):
-    books_to_return = [book for book in BOOKS if book.get('category').casefold() == category.casefold()]
+    books_to_return = [book for book in BOOKS if book.category.casefold() == category.casefold()]
     if not books_to_return:
         raise HTTPException(status_code=404, detail="No books found in this category")
     return books_to_return
 
-@app.get('/books/{book_author}/')
+@app.get('/books/{book_author}/', response_model=List[Book])
 async def read_author_category_by_query(book_author: str, category: str):
     books_to_return = [
-        book for book in BOOKS if book.get('author').casefold() == book_author.casefold() and 
-        book.get('category').casefold() == category.casefold()
+        book for book in BOOKS if book.author.casefold() == book_author.casefold() and 
+        book.category.casefold() == category.casefold()
     ]
     if not books_to_return:
         raise HTTPException(status_code=404, detail="No books found for this author in the given category")
     return books_to_return
 
 # * POST Method (Create a book)
-
-@app.post('/books/createbooks')
+@app.post('/books/createbooks', response_model=Book)
 async def create_books(book: Book):
     # Check if book already exists
     for existing_book in BOOKS:
-        if existing_book['title'].casefold() == book.title.casefold():
+        if existing_book.title.casefold() == book.title.casefold():
             raise HTTPException(status_code=400, detail="Book already exists")
     
-    BOOKS.append(book.dict())  # Convert Pydantic object to dictionary
-    return {"message": "Book added successfully", "book": book}
+    BOOKS.append(book)
+    return book
 
 # * PUT Method (Update a book)
-
-@app.put('/books/{book_title}')
+@app.put('/books/{book_title}', response_model=Book)
 async def update_book(book_title: str, updated_book: Book):
     for index, book in enumerate(BOOKS):
-        if book.get('title').casefold() == book_title.casefold():
-            BOOKS[index] = updated_book.dict()
-            return {"message": "Book updated successfully", "book": updated_book}
+        if book.title.casefold() == book_title.casefold():
+            BOOKS[index] = updated_book
+            return updated_book
     
     raise HTTPException(status_code=404, detail="Book not found")
 
 # * DELETE Method (Delete a book)
-
-@app.delete('/books/{book_title}')
+@app.delete('/books/{book_title}', response_model=dict)
 async def delete_book(book_title: str):
-    for i in range(len(BOOKS)):
-        if BOOKS[i].get('title').casefold() == book_title.casefold():
-            BOOKS.pop()
+    for i, book in enumerate(BOOKS):
+        if book.title.casefold() == book_title.casefold():
+            BOOKS.pop(i)
             return {"message": "Book deleted successfully"}
-    return {"message": "Book not found"}
+    
+    raise HTTPException(status_code=404, detail="Book not found")
+
+# * Endpoint to create book with BookRequest validation
+class BookRequest(BaseModel):
+    id: int
+    title: str = Field(min_length=2, max_length=80)
+    author: str = Field(min_length=2, max_length=40)
+    description: str = Field(min_length=2, max_length=200)
+    category: str = Field(min_length=2, max_length=40)
+    rating: int = Field(..., ge=1, le=5)
 
 # ! ---------------------------- END OF CODE Project 1 API ---------------------------- !
 
-@app.post("/bookObj/create_book/")
-async def create_book(book: Book):
-    BOOKS.append(book)
-    return {"message": "Book added successfully", "book": book}
+@app.post("/bookObj/create_book/", response_model=Book)
+async def create_book(Book_request: BookRequest):
+    new_book = Book(**Book_request.model_dump())  # Convert Pydantic object to dictionary
+    BOOKS.append(new_book)
+    return new_book
