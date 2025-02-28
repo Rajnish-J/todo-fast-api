@@ -100,3 +100,7 @@ async def delete_book(book_title: str):
 
 # ! ---------------------------- END OF CODE Project 1 API ---------------------------- !
 
+@app.post("/bookObj/create_book/")
+async def create_book(book: Book):
+    BOOKS.append(book)
+    return {"message": "Book added successfully", "book": book}
