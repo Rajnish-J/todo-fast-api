@@ -1,4 +1,3 @@
-# * Import necessary libraries
 from fastapi import FastAPI, HTTPException, Path
 from pydantic import BaseModel, Field
 from typing import List, Optional
@@ -31,13 +30,15 @@ BOOKS: List[Book] = [
          description='A novel by Brazilian author Paulo Coelho', category='fiction', rating=5)
 ]
 
-# * creating a function to generate a new id for the book
+# * Function to generate a new ID for the book
 def generate_book_id(BOOKS):
     return (BOOKS[-1].id + 1) if BOOKS else 1
 
 # * GET Methods
 @app.get('/books', response_model=List[Book])
 async def read_all_books():
+    if not BOOKS:
+        raise HTTPException(status_code=404, detail="No books available")
     return BOOKS
 
 @app.get('/books/{book_title}', response_model=Book)
@@ -95,11 +96,9 @@ async def delete_book(book_title: str):
     
     raise HTTPException(status_code=404, detail="Book not found")
 
-# ! ---------------------------- END OF CODE Project 1 API ---------------------------- !
-
 # * Endpoint to create book with BookRequest validation
 class BookRequest(BaseModel):
-    id: Optional[int] = Field(description="ID is not require to create a book", default=None)
+    id: Optional[int] = Field(description="ID is not required to create a book", default=None)
     title: str = Field(min_length=2, max_length=80)
     author: str = Field(min_length=2, max_length=40)
     description: str = Field(min_length=2, max_length=200)
@@ -118,9 +117,13 @@ class BookRequest(BaseModel):
         }
     }
 
-# * Create a new book with BookRequest validation
 @app.post("/bookObj/create_book/", response_model=Book)
 async def create_book(Book_request: BookRequest):
+    # Check if book already exists
+    for book in BOOKS:
+        if book.title.casefold() == Book_request.title.casefold():
+            raise HTTPException(status_code=400, detail="Book already exists")
+    
     new_book = Book(**Book_request.model_dump())
     new_book.id = generate_book_id(BOOKS)
     BOOKS.append(new_book)
@@ -135,12 +138,11 @@ async def fetchBookByID(book_id: int = Path(gt=0)):
     raise HTTPException(status_code=404, detail="Book not found")
 
 # * Fetch book by rating
-@app.get("/books/rating/{rating}", response_model = List[Book])
-async def fetchBookByRating(rating: int):
-    books_to_return = []
-    for book in BOOKS:
-        if book.rating == rating:
-            books_to_return.append(book)
+@app.get("/books/rating/{rating}", response_model=List[Book])
+async def fetchBookByRating(rating: int = Path(..., ge=1, le=5)):
+    books_to_return = [book for book in BOOKS if book.rating == rating]
+    if not books_to_return:
+        raise HTTPException(status_code=404, detail="No books found with this rating")
     return books_to_return
 
 # * Update book by ID
@@ -152,7 +154,7 @@ async def updateBookByID(book_id: int, updated_book: Book):
             return updated_book
     raise HTTPException(status_code=404, detail="Book not found")
 
-# * delete book by id
+# * Delete book by ID
 @app.delete("/books/delete/{book_id}", response_model=dict)
 async def deleteBookByID(book_id: int = Path(gt=0)):
     for i, book in enumerate(BOOKS):
