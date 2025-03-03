@@ -1,20 +1,31 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
+# Import necessary modules from SQLAlchemy
+
+from sqlalchemy import create_engine  # * Used to create a connection to the database
+from sqlalchemy.orm import sessionmaker  # * Helps in handling database sessions
+from sqlalchemy.ext.declarative import declarative_base  # * Base class for all models
+
+# ? Import dotenv to load environment variables from .env file
 from dotenv import load_dotenv
 import os
 
-# Load environment variables
+# * Load environment variables from the .env file
 load_dotenv()
 
-# Get database URL from .env file
+# * Get the database URL from the environment variables
+# * This should be set in the .env file as:
+# * DATABASE_URL = "mysql+pymysql://root:root@localhost:3306/todo-fastapi"
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Create the MySQL database engine
+# * Create the MySQL database engine
+# * The engine is responsible for managing the connection to the database
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
-# Create session
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# * Create a database session factory
+# * This session is used to interact with the database
+SessionLocal = sessionmaker(autocommit=False,  # * Prevents automatic commits to avoid accidental changes
+                            autoflush=False,   # * Prevents auto-flushing changes before commit
+                            bind=engine)       # * Binds the session to the database engine
 
-# Base class for models
+# * Create a Base class for defining database models
+# * All database models should inherit from this Base class
 Base = declarative_base()

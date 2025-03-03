@@ -1,27 +1,25 @@
-# * Import Base from the database file to link our model to the database
-from database import Base
+# Import necessary modules from SQLAlchemy
+from database import Base  # * Import Base from database.py to define our models
+from sqlalchemy import Column, Integer, String, Boolean  # * Import column types
 
-# ? Import necessary SQLAlchemy components for defining the table schema
-from sqlalchemy import Column, Integer, String, Boolean
-
-# * Define the Todo class which represents a database table
+# * Define the Todo model, which represents the 'todos' table in the database
 class Todo(Base):
-    # ?Set the name of the table in the database
-    __tablename__ = 'todos'
+    # * Name of the table in the database
+    __tablename__ = 'todos'  
     
-    # * Define the columns in the table with their types and constraints
+    # * Define the columns of the table
     
-    # * Unique identifier for each to-do item (Primary Key)
-    id = Column(Integer, primary_key=True, index=True)
+    # * 'id' column: A unique identifier for each task (Primary Key)
+    id = Column(Integer, primary_key=True, index=True)  # * Primary key ensures each row has a unique ID
 
-    # * Title of the to-do item (Short description)
-    title = Column(String)
+    # * 'title' column: A short title for the task (VARCHAR with max length 255)
+    title = Column(String(255), nullable=False)  # * String requires a length in MySQL
 
-    # * Detailed description of the to-do item
-    description = Column(String)
+    # * 'description' column: A longer description for the task (VARCHAR with max length 500)
+    description = Column(String(500), nullable=True)  # * Can be left empty (NULL allowed)
 
-    # * Priority level of the task (e.g., 1 = Low, 5 = High)
-    priority = Column(Integer)
+    # * 'priority' column: An integer to define the priority of the task (e.g., 1 = Low, 5 = High)
+    priority = Column(Integer, nullable=False)  
 
-    # * Status of the to-do (True = Completed, False = Not Completed), default is False
-    complete_status = Column(Boolean, default=False)
+    # * 'complete_status' column: A boolean value indicating if the task is completed or not
+    complete_status = Column(Boolean, default=False)  # * Default value is False (Task is incomplete)
