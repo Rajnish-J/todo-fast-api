@@ -31,6 +31,12 @@ BOOKS: List[Book] = [
          description='A novel by Brazilian author Paulo Coelho', category='fiction', rating=5)
 ]
 
+# * creating a function to generate a new id for the book
+def generate_book_id(BOOKS):
+    if BOOKS:
+        return BOOKS[-1].id + 1
+    return 1
+
 # * GET Methods
 @app.get('/books', response_model=List[Book])
 async def read_all_books():
@@ -91,6 +97,8 @@ async def delete_book(book_title: str):
     
     raise HTTPException(status_code=404, detail="Book not found")
 
+# ! ---------------------------- END OF CODE Project 1 API ---------------------------- !
+
 # * Endpoint to create book with BookRequest validation
 class BookRequest(BaseModel):
     id: int
@@ -100,10 +108,11 @@ class BookRequest(BaseModel):
     category: str = Field(min_length=2, max_length=40)
     rating: int = Field(..., ge=1, le=5)
 
-# ! ---------------------------- END OF CODE Project 1 API ---------------------------- !
 
 @app.post("/bookObj/create_book/", response_model=Book)
 async def create_book(Book_request: BookRequest):
     new_book = Book(**Book_request.model_dump())  # Convert Pydantic object to dictionary
+    new_book.id = generate_book_id(BOOKS)
     BOOKS.append(new_book)
     return new_book
+
