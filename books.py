@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Path
+from fastapi import FastAPI, HTTPException, Path, status
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
@@ -35,66 +35,66 @@ def generate_book_id(BOOKS):
     return (BOOKS[-1].id + 1) if BOOKS else 1
 
 # * GET Methods
-@app.get('/books', response_model=List[Book])
+@app.get('/books', response_model=List[Book], status_code=status.HTTP_200_OK)
 async def read_all_books():
     if not BOOKS:
-        raise HTTPException(status_code=404, detail="No books available")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No books available")
     return BOOKS
 
-@app.get('/books/{book_title}', response_model=Book)
+@app.get('/books/{book_title}', response_model=Book, status_code=status.HTTP_200_OK)
 async def read_book(book_title: str):
     for book in BOOKS:
         if book.title.casefold() == book_title.casefold():
             return book
-    raise HTTPException(status_code=404, detail="Book not found")
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
 
-@app.get('/books/', response_model=List[Book])
+@app.get('/books/', response_model=List[Book], status_code=status.HTTP_200_OK)
 async def read_category_by_query(category: str):
     books_to_return = [book for book in BOOKS if book.category.casefold() == category.casefold()]
     if not books_to_return:
-        raise HTTPException(status_code=404, detail="No books found in this category")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No books found in this category")
     return books_to_return
 
-@app.get('/books/{book_author}/', response_model=List[Book])
+@app.get('/books/{book_author}/', response_model=List[Book], status_code=status.HTTP_200_OK)
 async def read_author_category_by_query(book_author: str, category: str):
     books_to_return = [
         book for book in BOOKS if book.author.casefold() == book_author.casefold() and 
         book.category.casefold() == category.casefold()
     ]
     if not books_to_return:
-        raise HTTPException(status_code=404, detail="No books found for this author in the given category")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No books found for this author in the given category")
     return books_to_return
 
 # * POST Method (Create a book)
-@app.post('/books/createbooks', response_model=Book)
+@app.post('/books/createbooks', response_model=Book, status_code=status.HTTP_201_CREATED)
 async def create_books(book: Book):
     # Check if book already exists
     for existing_book in BOOKS:
         if existing_book.title.casefold() == book.title.casefold():
-            raise HTTPException(status_code=400, detail="Book already exists")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Book already exists")
     
     BOOKS.append(book)
     return book
 
 # * PUT Method (Update a book)
-@app.put('/books/{book_title}', response_model=Book)
+@app.put('/books/{book_title}', response_model=Book, status_code=status.HTTP_200_OK)
 async def update_book(book_title: str, updated_book: Book):
     for index, book in enumerate(BOOKS):
         if book.title.casefold() == book_title.casefold():
             BOOKS[index] = updated_book
             return updated_book
     
-    raise HTTPException(status_code=404, detail="Book not found")
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
 
 # * DELETE Method (Delete a book)
-@app.delete('/books/{book_title}', response_model=dict)
+@app.delete('/books/{book_title}', response_model=dict, status_code=status.HTTP_200_OK)
 async def delete_book(book_title: str):
     for i, book in enumerate(BOOKS):
         if book.title.casefold() == book_title.casefold():
             BOOKS.pop(i)
             return {"message": "Book deleted successfully"}
     
-    raise HTTPException(status_code=404, detail="Book not found")
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
 
 # * Endpoint to create book with BookRequest validation
 class BookRequest(BaseModel):
@@ -117,12 +117,12 @@ class BookRequest(BaseModel):
         }
     }
 
-@app.post("/bookObj/create_book/", response_model=Book)
+@app.post("/bookObj/create_book/", response_model=Book, status_code=status.HTTP_201_CREATED)
 async def create_book(Book_request: BookRequest):
     # Check if book already exists
     for book in BOOKS:
         if book.title.casefold() == Book_request.title.casefold():
-            raise HTTPException(status_code=400, detail="Book already exists")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Book already exists")
     
     new_book = Book(**Book_request.model_dump())
     new_book.id = generate_book_id(BOOKS)
@@ -130,35 +130,35 @@ async def create_book(Book_request: BookRequest):
     return new_book
 
 # * Fetch book by ID (fix path conflict)
-@app.get("/books/id/{book_id}", response_model=Book)
+@app.get("/books/id/{book_id}", response_model=Book, status_code=status.HTTP_200_OK)
 async def fetchBookByID(book_id: int = Path(gt=0)):
     for book in BOOKS:
         if book.id == book_id:
             return book
-    raise HTTPException(status_code=404, detail="Book not found")
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
 
 # * Fetch book by rating
-@app.get("/books/rating/{rating}", response_model=List[Book])
+@app.get("/books/rating/{rating}", response_model=List[Book], status_code=status.HTTP_200_OK)
 async def fetchBookByRating(rating: int = Path(..., ge=1, le=5)):
     books_to_return = [book for book in BOOKS if book.rating == rating]
     if not books_to_return:
-        raise HTTPException(status_code=404, detail="No books found with this rating")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No books found with this rating")
     return books_to_return
 
 # * Update book by ID
-@app.put("/books/update/{book_id}", response_model=Book)
+@app.put("/books/update/{book_id}", response_model=Book, status_code=status.HTTP_200_OK)
 async def updateBookByID(book_id: int, updated_book: Book):
     for index, book in enumerate(BOOKS):
         if book.id == book_id:
             BOOKS[index] = updated_book
             return updated_book
-    raise HTTPException(status_code=404, detail="Book not found")
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
 
 # * Delete book by ID
-@app.delete("/books/delete/{book_id}", response_model=dict)
+@app.delete("/books/delete/{book_id}", response_model=dict, status_code=status.HTTP_200_OK)
 async def deleteBookByID(book_id: int = Path(gt=0)):
     for i, book in enumerate(BOOKS):
         if book.id == book_id:
             BOOKS.pop(i)
             return {"message": "Book deleted successfully"}
-    raise HTTPException(status_code=404, detail="Book not found")
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
