@@ -1,5 +1,5 @@
 # * Import necessary libraries
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Path
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
@@ -33,9 +33,7 @@ BOOKS: List[Book] = [
 
 # * creating a function to generate a new id for the book
 def generate_book_id(BOOKS):
-    if BOOKS:
-        return BOOKS[-1].id + 1
-    return 1
+    return (BOOKS[-1].id + 1) if BOOKS else 1
 
 # * GET Methods
 @app.get('/books', response_model=List[Book])
@@ -101,18 +99,64 @@ async def delete_book(book_title: str):
 
 # * Endpoint to create book with BookRequest validation
 class BookRequest(BaseModel):
-    id: int
+    id: Optional[int] = Field(description="ID is not require to create a book", default=None)
     title: str = Field(min_length=2, max_length=80)
     author: str = Field(min_length=2, max_length=40)
     description: str = Field(min_length=2, max_length=200)
     category: str = Field(min_length=2, max_length=40)
     rating: int = Field(..., ge=1, le=5)
+    
+    model_config = {
+        "json_schema_extra":{
+            "example": {
+                "title": "How to be...",
+                "author": "Dev-Rajnish",
+                "description": "This is a book about how to be a good person",
+                "category": "Self-help",
+                "rating": 5,
+            }
+        }
+    }
 
-
+# * Create a new book with BookRequest validation
 @app.post("/bookObj/create_book/", response_model=Book)
 async def create_book(Book_request: BookRequest):
-    new_book = Book(**Book_request.model_dump())  # Convert Pydantic object to dictionary
+    new_book = Book(**Book_request.model_dump())
     new_book.id = generate_book_id(BOOKS)
     BOOKS.append(new_book)
     return new_book
 
+# * Fetch book by ID (fix path conflict)
+@app.get("/books/id/{book_id}", response_model=Book)
+async def fetchBookByID(book_id: int = Path(gt=0)):
+    for book in BOOKS:
+        if book.id == book_id:
+            return book
+    raise HTTPException(status_code=404, detail="Book not found")
+
+# * Fetch book by rating
+@app.get("/books/rating/{rating}", response_model = List[Book])
+async def fetchBookByRating(rating: int):
+    books_to_return = []
+    for book in BOOKS:
+        if book.rating == rating:
+            books_to_return.append(book)
+    return books_to_return
+
+# * Update book by ID
+@app.put("/books/update/{book_id}", response_model=Book)
+async def updateBookByID(book_id: int, updated_book: Book):
+    for index, book in enumerate(BOOKS):
+        if book.id == book_id:
+            BOOKS[index] = updated_book
+            return updated_book
+    raise HTTPException(status_code=404, detail="Book not found")
+
+# * delete book by id
+@app.delete("/books/delete/{book_id}", response_model=dict)
+async def deleteBookByID(book_id: int = Path(gt=0)):
+    for i, book in enumerate(BOOKS):
+        if book.id == book_id:
+            BOOKS.pop(i)
+            return {"message": "Book deleted successfully"}
+    raise HTTPException(status_code=404, detail="Book not found")
