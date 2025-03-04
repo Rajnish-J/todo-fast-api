@@ -5,11 +5,15 @@ import models
 from models import Todo
 from pydantic import BaseModel, Field
 
+from Routers import auth
+
 # * Create the database tables (Only needed if not using Alembic for migrations)
 models.Base.metadata.create_all(bind=engine)
 
 # * Initialize FastAPI app
 app = FastAPI()
+
+app.include_router(auth.router)
 
 # * Dependency to get the database session
 def get_db():
