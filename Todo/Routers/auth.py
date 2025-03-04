@@ -1,7 +1,13 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from database import SessionLocal
 
-router = APIRouter()
+router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-@router.get("/auth/")
-async def auth():
-    return {"data" : "authorization"}
+# * Dependency to get the database session
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
