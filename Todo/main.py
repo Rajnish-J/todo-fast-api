@@ -41,3 +41,29 @@ async def readTODOByID(todo_id: int = Path(gt=0), db: Session = Depends(get_db))
         return ret_todo
     raise HTTPException(status_code=404, detail=f"TODO not found with id {todo_id}")
 
+# * API Endpoint: To add todo in the db with todo object
+@app.post("/addtodo", status_code=status.HTTP_201_CREATED)
+async def addTODO(todo: TodoRequest, db: Session = Depends(get_db)):
+    todo_obj = Todo(**todo.model_dump())
+    db.add(todo_obj)
+    db.commit()
+    
+    return todo_obj
+
+# * API Endpoint: update method to update the todo's in the db
+@app.put("/Updatetodo/{todo_id}", status_code=status.HTTP_200_OK)
+async def updatetodo(todo_id :int, todo : TodoRequest, db: Session = Depends(get_db)):
+    todo_obj = db.query(Todo).filter(Todo.id == todo_id).first()
+    if todo_obj is None:
+        raise HTTPException(status_code=404, detail=f"TODO not found with id {todo_id}")
+    
+    todo_obj.title = todo.title
+    todo_obj.description = todo.description
+    todo_obj.priority = todo.priority
+    todo_obj.complete_status = todo.complete_status
+    
+    db.add(todo_obj)
+    db.commit()
+    
+    return todo_obj
+
