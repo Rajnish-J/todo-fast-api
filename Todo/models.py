@@ -1,25 +1,25 @@
-# Import necessary modules from SQLAlchemy
-from database import Base  # * Import Base from database.py to define our models
-from sqlalchemy import Column, Integer, String, Boolean  # * Import column types
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from database import Base
 
-# * Define the Todo model, which represents the 'todos' table in the database
+class Users(Base):
+    __tablename__= "users"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(255), unique=True, nullable=False)  # * Added length (255)
+    username = Column(String(100), nullable=False)  # * Added length (100)
+    firstname = Column(String(100), nullable=False)  # * Added length (100)
+    lastname = Column(String(100), nullable=False)  # * Added length (100)
+    hashed_password = Column(String(255), nullable=False)  # * Added length (255)
+    is_active = Column(Boolean, default=True)
+    role = Column(String(50), nullable=False)  # * Added length (50)
+
 class Todo(Base):
-    # * Name of the table in the database
-    __tablename__ = 'todos'  
+    __tablename__ = 'todos'
     
-    # * Define the columns of the table
-    
-    # * 'id' column: A unique identifier for each task (Primary Key)
-    id = Column(Integer, primary_key=True, index=True)  # * Primary key ensures each row has a unique ID
+    todo_id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))  # * Ensure lowercase "users"
 
-    # * 'title' column: A short title for the task (VARCHAR with max length 255)
-    title = Column(String(255), nullable=False)  # * String requires a length in MySQL
-
-    # * 'description' column: A longer description for the task (VARCHAR with max length 500)
-    description = Column(String(500), nullable=True)  # * Can be left empty (NULL allowed)
-
-    # * 'priority' column: An integer to define the priority of the task (e.g., 1 = Low, 5 = High)
-    priority = Column(Integer, nullable=False)  
-
-    # * 'complete_status' column: A boolean value indicating if the task is completed or not
-    complete_status = Column(Boolean, default=False)  # * Default value is False (Task is incomplete)
+    title = Column(String(255), nullable=False)  # * Added length (255)
+    description = Column(String(500), nullable=True)  # * Added length (500)
+    priority = Column(Integer, nullable=False)
+    complete_status = Column(Boolean, default=False)
