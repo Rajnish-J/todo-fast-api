@@ -1,6 +1,29 @@
-fastapi
-uvicorn
-sqlalchemy
-pymysql
-alembic
-python-dotenv
+# * FastAPI framework for building APIs
+fastapi  
+
+# * ASGI server for running FastAPI applications
+uvicorn  
+
+# * SQL toolkit and ORM for database interactions
+sqlalchemy  
+
+# * MySQL database driver for SQLAlchemy
+pymysql  
+
+# * Database migration tool for SQLAlchemy
+alembic  
+
+# * Load environment variables from a .env file
+python-dotenv  
+
+# * Library for password hashing (uses bcrypt)
+passlib[bcrypt]  
+
+# * Bcrypt for hashing passwords (Pinned to version 4.0.1)
+bcrypt==4.0.1  
+
+# * Optional: Adds email validation support in Pydantic
+pydantic[email]  
+
+# * Optional: Required for handling form-data (e.g., file uploads)
+python-multipart  

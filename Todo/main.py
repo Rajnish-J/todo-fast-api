@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from database import engine, SessionLocal
 import models
-from Routers import todos, auth
+from Routers import todos, auth, users
 
 # * Create the database tables (Only needed if not using Alembic for migrations)
 models.Base.metadata.create_all(bind=engine)
@@ -12,6 +12,7 @@ app = FastAPI()
 # * Include routers for todos and auth
 app.include_router(todos.router)
 app.include_router(auth.router)
+app.include_router(users.router)
 
 # * Dependency to get the database session
 def get_db():
