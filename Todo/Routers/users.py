@@ -11,12 +11,12 @@ import os
 from dotenv import load_dotenv
 import jwt
 
-# * router to main.py for the API calling
-router = APIRouter(prefix="/user", tags=["User"])
-
-JWT_SECRET_KEY = os.getenv("SECRET_KEY")
+# * Load environment variables
+load_dotenv()
+JWT_SECRET_KEY = os.getenv("SECRET_KEY", "default_secret_key")  
 ALGORITHM = "HS256"
 
+router = APIRouter(prefix="/user", tags=["User"])
 bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated="auto")
 
 # * Dependency to get the database session
@@ -27,31 +27,33 @@ def get_db():
     finally:
         db.close()
 
-# * function to check authenticated user or not
+# * Authenticate User
 def authenticateUser(username: str, password: str, db: Session):
     user = db.query(Users).filter(Users.username == username).first()
-    if not user:
-        return False
-    if not bcrypt_context.verify(password, user.password):
+    if not user or not bcrypt_context.verify(password, user.password):
         return False
     return user
 
-# * funtion to generate access token
+# * Generate JWT Access Token
 def create_access_token(username: str, user_id: int, expires_delta: timedelta):
-    encode = {'sub': username, 'id': user_id}
-    expires = datetime.now(timezone.utc) + expires_delta
-    encode.update({'exp':expires})
-    return jwt.encode(encode, JWT_SECRET_KEY, algorithm = ALGORITHM)
+    payload = {
+        'sub': username,
+        'id': user_id,
+        'exp': datetime.now(timezone.utc) + expires_delta
+    }
+    return jwt.encode(payload, JWT_SECRET_KEY, algorithm=ALGORITHM)
 
+# * Request Model for Creating Users
 class UserRequest(BaseModel):
     email: str = Field(max_length=50)
     username: str = Field(max_length=30)
     firstname: str = Field(max_length=15)
     lastname: str = Field(max_length=15)
-    password: str = Field(min_length=8, max_length=16)
+    password: str = Field(min_length=8, max_length=72)  # ✅ Updated max_length=72
     is_active: bool
     role: str = Field(max_length=15)
 
+# * Login and Get JWT Access Token
 @router.post("/getAccessToken")
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
@@ -60,31 +62,30 @@ async def login_for_access_token(
     user = authenticateUser(form_data.username, form_data.password, db)
     if not user:
         raise HTTPException(status_code=400, detail="Invalid username or password")
-    token = create_access_token(user.username, user.id, timedelta(minutes=45))
-    
-    return token
 
+    token = create_access_token(user.username, user.id, timedelta(minutes=45))
+    return {"access_token": token, "token_type": "bearer"}
+
+# * Create New User
 @router.post("/createUser", status_code=status.HTTP_201_CREATED)
 async def createUser(create_user: UserRequest, db: Session = Depends(get_db)):
-    hash_password = bcrypt_context.hash(create_user.password)
+    hashed_password = bcrypt_context.hash(create_user.password)  # ✅ Hash the password
     user_obj = Users(
         email=create_user.email,
         username=create_user.username,
         firstname=create_user.firstname,
         lastname=create_user.lastname,
-        password=hash_password,
+        password=hashed_password,  # ✅ Store hashed password
         is_active=create_user.is_active,
         role=create_user.role
     )
 
-    if user_obj.is_active:
-        db.add(user_obj)
-        db.commit()
-        db.refresh(user_obj)
-    else:
-        raise HTTPException(status_code=404, detail="User is not active")
+    db.add(user_obj)
+    db.commit()
+    db.refresh(user_obj)
+    return {"message": "User created successfully"}
 
-
+# * Fetch User by ID
 @router.get("/fetchuserbyid/{id}", status_code=status.HTTP_200_OK)
 async def fetchuserbyid(id: int = Path(gt=0), db: Session = Depends(get_db)):
     user = db.query(Users).filter(Users.id == id).first()
