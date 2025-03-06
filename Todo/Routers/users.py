@@ -1,9 +1,11 @@
-from fastapi import APIRouter, Depends, status, HTTPException
+from typing import Annotated
+from fastapi import APIRouter, Depends, status, HTTPException, Path
 from pydantic import BaseModel, Field
 from database import SessionLocal
 from sqlalchemy.orm import Session
 from models import Users
 from passlib.context import CryptContext
+from fastapi.security import OAuth2PasswordRequestForm
 
 # * router to main.py for the API calling
 router = APIRouter(prefix="/user", tags=["User"])
@@ -17,7 +19,16 @@ def get_db():
         yield db
     finally:
         db.close()
-        
+
+def authenticateUser(username: str, password: str, db: Session):
+    user = db.query(Users).filter(Users.username == username).first()
+    if not user:
+        return False
+    if not bcrypt_context.verify(password, user.hashed_password):
+        return False
+    return True
+
+
 class UserRequest(BaseModel):
     email : str = Field(max_length=50)
     username : str = Field(max_length=30)
@@ -47,3 +58,21 @@ async def createUser(create_user: UserRequest, db: Session = Depends(get_db)):
 
     else:
         raise HTTPException(status_code=404, detail="user is not active")
+
+@router.post("/getAccessToken")
+async def login_for_access_token(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    db: Session = Depends(get_db)
+):
+    user = authenticateUser(form_data.username, form_data.password, db)
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid username or password")
+    
+    return {"message": "Successfully authenticated"}
+
+@router.get("/fetchuserbyid/{id}", status_code=status.HTTP_200_OK)
+async def fetchuserbyid(id: int = Path(gt=0), db:Session = Depends(get_db)):
+    user = db.query(Users).filter(Users.id == id).first()
+    if user:
+        return user
+    raise HTTPException(status_code=404, detail="no user found")
