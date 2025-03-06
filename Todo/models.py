@@ -2,24 +2,24 @@ from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
 from database import Base
 
 class Users(Base):
-    __tablename__= "users"
-    
+    __tablename__ = "users"
+
     id = Column(Integer, primary_key=True, index=True)
-    email = Column(String(255), unique=True, nullable=False)  # * Added length (255)
-    username = Column(String(100), nullable=False)  # * Added length (100)
-    firstname = Column(String(100), nullable=False)  # * Added length (100)
-    lastname = Column(String(100), nullable=False)  # * Added length (100)
-    hashed_password = Column(String(255), nullable=False)  # * Added length (255)
+    email = Column(String(50), unique=True, nullable=False)  # * Added length (50)
+    username = Column(String(25), nullable=False)  # * Added length (25)
+    firstname = Column(String(25), nullable=False)  # * Added length (25)
+    lastname = Column(String(25), nullable=False)  # * Added length (25)
+    password = Column(String(25), nullable=False)  # * Added length (25)
     is_active = Column(Boolean, default=True)
-    role = Column(String(50), nullable=False)  # * Added length (50)
+    role = Column(String(20), nullable=False)  # * Added length (20)
 
 class Todo(Base):
-    __tablename__ = 'todos'
-    
+    __tablename__ = "todos"
+
     todo_id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))  # * Ensure lowercase "users"
 
-    title = Column(String(255), nullable=False)  # * Added length (255)
+    title = Column(String(150), nullable=False)  # * Added length (150)
     description = Column(String(500), nullable=True)  # * Added length (500)
     priority = Column(Integer, nullable=False)
     complete_status = Column(Boolean, default=False)
