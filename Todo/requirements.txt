@@ -27,3 +27,24 @@ pydantic[email]
 
 # * Optional: Required for handling form-data (e.g., file uploads)
 python-multipart  
+
+# * Python-JOSE with cryptography for JWT authentication
+python-jose[cryptography]  
+
+# * PyJWT for handling JSON Web Tokens (Alternative to python-jose)
+PyJWT  
+
+# * Authlib for OAuth2 and OpenID authentication
+authlib  
+
+# * HTTPX for making async HTTP requests (useful for external API calls)
+httpx  
+
+# # * Redis for caching and session management (optional)
+# redis  
+
+# # * Celery for background task processing (optional)
+# celery  
+
+# # * Gunicorn for production server deployment (optional)
+# gunicorn  
