@@ -7,8 +7,8 @@ from jose import jwt, JWTError
 import os
 from dotenv import load_dotenv
 from passlib.context import CryptContext
-from database import SessionLocal
 from models import Users
+from database import get_db
 
 # * Load environment variables
 load_dotenv()
@@ -18,14 +18,6 @@ ALGORITHM = "HS256"
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated="auto")
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl="/auth/getAccessToken")
-
-# * Dependency to get the database session
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 # * Authenticate User
 def authenticate_user(username: str, password: str, db: Session):

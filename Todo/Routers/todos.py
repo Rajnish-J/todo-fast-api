@@ -1,10 +1,13 @@
+from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status, Path
 from sqlalchemy.orm import Session
 from models import Todo
 from pydantic import BaseModel, Field
 from database import get_db
+from Routers.auth import get_current_user
 
 router = APIRouter(prefix="/todos", tags=["Todos"])
+user_dependency = Annotated[dict, Depends(get_current_user)]
 
 class TodoRequest(BaseModel):
     title: str = Field(min_length=3)
@@ -24,8 +27,10 @@ async def read_todo_by_id(todo_id: int = Path(gt=0), db: Session = Depends(get_d
     raise HTTPException(status_code=404, detail=f"TODO not found with id {todo_id}")
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-async def add_todo(todo: TodoRequest, db: Session = Depends(get_db)):
-    todo_obj = Todo(**todo.model_dump())
+async def add_todo(user: user_dependency , todo: TodoRequest, db: Session = Depends(get_db)):
+    if user is None:
+        raise HTTPException(status_code=401, detail = "unauthorized")
+    todo_obj = Todo(**todo.model_dump(), user_id = user.get('id'))
     db.add(todo_obj)
     db.commit()
     return todo_obj
