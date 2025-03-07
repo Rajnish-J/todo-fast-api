@@ -4,17 +4,10 @@ from pydantic import BaseModel, Field
 from database import SessionLocal
 from models import Users
 from passlib.context import CryptContext
+from database import get_db
 
 router = APIRouter(prefix="/user", tags=["User"])
 bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated="auto")
-
-# * Dependency to get the database session
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 # * Request Model for Creating Users
 class UserRequest(BaseModel):

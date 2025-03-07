@@ -29,3 +29,11 @@ SessionLocal = sessionmaker(autocommit=False,  # * Prevents automatic commits to
 # * Create a Base class for defining database models
 # * All database models should inherit from this Base class
 Base = declarative_base()
+
+# * Database dependency function
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
