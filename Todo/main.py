@@ -2,7 +2,6 @@ from fastapi import FastAPI, Depends
 from database import engine, SessionLocal
 import models
 from Routers import todos, auth, users
-from sqlalchemy.orm import Session
 from database import get_db
 
 # * Create the database tables (Only needed if not using Alembic for migrations)
