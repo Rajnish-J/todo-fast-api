@@ -15,6 +15,16 @@ class TodoRequest(BaseModel):
     priority: int = Field(gt=0, lt=6)
     complete_status: bool = False
 
+# * create todo with repective to user id
+@router.post("/create_todo", status_code=status.HTTP_201_CREATED)
+async def create_todo(user: user_dependency , todo: TodoRequest, db: Session = Depends(get_db)):
+    if user is None:
+        raise HTTPException(status_code=401, detail = "unauthorized")
+    todo_obj = Todo(**todo.model_dump(), user_id = user.get('id'))
+    db.add(todo_obj)
+    db.commit()
+    return todo_obj
+
 # * get all todo by user id
 @router.get("/getTodo_byUserID", status_code=status.HTTP_200_OK)
 async def read_all_todos(user: user_dependency , db: Session = Depends(get_db)):
@@ -31,16 +41,6 @@ async def read_todo_by_id(user: user_dependency , todo_id: int = Path(gt=0), db:
     if todo:
         return todo
     raise HTTPException(status_code=404, detail=f"TODO not found with id {todo_id}")
-
-# * create todo with repective to user id
-@router.post("/create_todo", status_code=status.HTTP_201_CREATED)
-async def create_todo(user: user_dependency , todo: TodoRequest, db: Session = Depends(get_db)):
-    if user is None:
-        raise HTTPException(status_code=401, detail = "unauthorized")
-    todo_obj = Todo(**todo.model_dump(), user_id = user.get('id'))
-    db.add(todo_obj)
-    db.commit()
-    return todo_obj
 
 # * update todo by todo and user id
 @router.put("/{todo_id}", status_code=status.HTTP_200_OK)
