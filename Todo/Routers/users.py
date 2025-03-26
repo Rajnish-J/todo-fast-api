@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Path
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
-from database import SessionLocal
 from models import Users
 from passlib.context import CryptContext
 from database import get_db
